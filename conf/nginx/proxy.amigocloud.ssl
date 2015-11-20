@@ -1,0 +1,53 @@
+# AmigoProxy
+#
+# Copyright (c) 2011-2015 AmigoCloud Inc., All rights reserved.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation; either
+# version 3.0 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this library.
+
+server {
+    listen                 80;
+    listen                 [::]:80 ipv6only=on;
+    listen                 443   default   ssl;
+
+    ssl_protocols          TLSv1 TLSv1.1 TLSv1.2;  # Disabled SSL3 (POODLE attack)
+    server_name            proxy.amigocloud.com;
+    client_max_body_size   8M;
+
+    access_log             /var/log/nginx/proxy.amigocloud.ssl.access.log;
+    error_log              /var/log/nginx/proxy.amigocloud.ssl.error.log;
+
+    # new certs for 2015-02 to 2016-02
+    ssl_certificate_key    /etc/nginx/ssl/ssl.key;
+    ssl_certificate        /etc/nginx/ssl/new.crt;
+
+    if ($scheme = http) {
+        return   301   https://$server_name$request_uri;
+    }
+
+    location / {
+        # Pass the request
+        proxy_pass         http://127.0.0.1;
+
+        # Pass a bunch of headers to the downstream server, so they'll know what's going on.
+        proxy_set_header   Host                $host;
+        proxy_set_header   X-Real-IP           $remote_addr;
+        proxy_set_header   X-Forwarded-For     $proxy_add_x_forwarded_for;
+
+        # Most web apps can be configured to read this header and understand that the current session is actually HTTPS.
+        proxy_set_header   X-Forwarded-Proto   https;
+
+        # We expect the downsteam servers to redirect to the right hostname, so don't do any rewrites here.
+        proxy_redirect     off;
+    }
+}

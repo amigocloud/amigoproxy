@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% comment 'LICENSE' %}
+AmigoProxy
+
+Copyright (c) 2011-2015 AmigoCloud Inc., All rights reserved.
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either
+version 3.0 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU General Public
+License along with this library.
+{% endcomment %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ STATIC_URL }}css/typeahead.css" media="all">
+{% endblock %}
+
+{% block content %}
+<h1 class="dashboard-title"><span class="amigo">Amigo</span>Proxy Dashboard</h1>
+
+<div class="col-md-8 col-md-offset-2">
+  <div class="in-and-out">
+    <div class="col-md-6">
+      <table border="0">
+        <tr>
+          <td colspan="5"><strong>Last second</strong></td>
+        </tr>
+        <tr>
+          <td rowspan="2">
+            <i class="fa fa-download data-in"></i>
+          </td>
+          <td>
+            <span id="last_second_data_in">---</span>
+          </td>
+          <td rowspan="2" class="separator"></td>
+          </td>
+          <td rowspan="2">
+            <i class="fa fa-upload data-out"></i>
+          </td>
+          <td>
+            <span id="last_second_data_out">---</span>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span id="last_second_count_in">---</span>
+          </td>
+          <td>
+            <span id="last_second_count_out">---</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div class="col-md-6">
+      <table border="0">
+        <tr>
+          <td colspan="5"><strong>Last minute</strong></td>
+        </tr>
+        <tr>
+          <td rowspan="2">
+            <i class="fa fa-download data-in"></i>
+          </td>
+          <td>
+            <span id="last_minute_data_in">---</span>
+          </td>
+          <td rowspan="2" class="separator"></td>
+          </td>
+          <td rowspan="2">
+            <i class="fa fa-upload data-out"></i>
+          </td>
+          <td>
+            <span id="last_minute_data_out">---</span>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <span id="last_minute_count_in">---</span>
+          </td>
+          <td>
+            <span id="last_minute_count_out">---</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+</div>
+
+<div class="col-md-6">
+  <div class="panel dashboard-panel targets">
+    <h2 class="dashboard-subtitle">Targets</h2>
+    <div>
+      <ul class="list-group">
+        {% for target in targets %}
+        <li class="list-group-item">
+          <span class="item-action">
+            <form class="delete-form" method="POST" action="{% url 'targets' %}">
+              {% csrf_token %}
+              <input type="hidden" name="method" value="DELETE">
+              <input type="hidden" name="id" value="{{ target.id }}">
+              <button type="submit" class="delete-item" data-toggle="tooltip" data-placement="top" title="Delete target">
+                <i class="fa fa-trash"></i>
+              </button>
+            </form>
+          </span>
+          <span class="item-action">
+            <button class="edit-item" target-id="{{ target.id }}" data-toggle="tooltip" data-placement="top" title="Edit target">
+              <i class="fa fa-pencil"></i>
+            </button>
+          </span>
+          <h4 class="list-group-item-heading target-name">{{ target.name }}</h4>
+          <p class="list-group-item-text target-url">
+            <span>{{ target.url }}</span>
+            <a href="{{ target.url }}" target="_blank">
+              <i class="fa fa-external-link"></i>
+            </a>
+          </p>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="new-item">
+        <form class="save-target" method="POST" action="{% url 'targets' %}">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="">
+          <input type="text" name="name" class="form-control top-input" placeholder="New target name">
+          <input type="url" name="url" class="form-control middle-input" placeholder="New target URL">
+          <button class="btn btn-success btn-block save-or-create" type="submit">Create</button>
+        </form>
+        <div class="alert alert-danger error-msg" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="col-md-6">
+  <div class="panel dashboard-panel sources">
+    <h2 class="dashboard-subtitle">Sources</h2>
+    <form class="source-search">
+      <input type="hidden" name="id" value="{{ source_found.id }}">
+      <div class="input-group">
+        <input type="text" id="source-name" class="form-control typeahead" placeholder="Search by source ID" value="{{ source_found.name }}{{ source_not_found }}">
+        <span class="input-group-btn">
+          <button class="btn btn-success" type="submit">
+            &nbsp;<i class="fa fa-arrow-right"></i>
+          </button>
+        </span>
+      </div>
+    </form>
+    {% if source_not_found %}
+    <div class="alert alert-danger error-msg">
+      No source found with that ID
+    </div>
+    {% elif source_found %}
+    <div class="source-details">
+      <span class="item-action">
+        <form action="/">
+          <button id="clear-search" type="submit">
+            <i class="fa fa-times-circle"></i> Clear search
+          </button>
+        </form>
+      </span>
+      <h4>ID: <span class="source-id">{{ source_found.name }}</span></h4>
+      <h4>Groups:</h4>
+      <ul class="list-group">
+        {% for group in source_found.all_groups %}
+        <li class="list-group-item">
+          {% if not group.default %}
+          <span class="item-action">
+            <form class="delete-form" method="POST" action="{% url 'sources' %}">
+              {% csrf_token %}
+              <input type="hidden" name="method" value="DELETE">
+              <input type="hidden" name="id" value="{{ source_found.id }}">
+              <input type="hidden" name="group_id" value="{{ group.id }}">
+              <button type="submit" class="delete-item" data-toggle="tooltip" data-placement="top" title="Remove group from source">
+                <i class="fa fa-close"></i>
+              </button>
+            </form>
+          </span>
+          {% endif %}
+          <h4 class="list-group-item-heading">
+            {{ group.name }}
+            {% if group.default %}<small>(default)</small>{% endif %}
+          </h4>
+          <p class="list-group-item-text">
+            {% for target in group.targets.all %}
+            <span>{{ target.name }}</span>{% if not forloop.last %},{% endif %}
+            {% empty %}
+            <span class="empty-targets">No targets</span>
+            {% endfor %}
+          </p>
+        </li>
+        {% endfor %}
+        <li class="list-group-item add-group">
+          <form method="POST" action="{% url 'sources' %}">
+            {% csrf_token %}            
+            <input type="hidden" name="id" value="{{ source_found.id }}">
+            <input type="hidden" name="group_id" value="">
+            <div class="input-group">
+              <input type="text" id="group-name" class="form-control typeahead" placeholder="Type to add a new group">
+              <span class="input-group-btn">
+                <button class="btn btn-success" type="submit">
+                  &nbsp;<i class="fa fa-plus"></i>
+                </button>
+              </span>
+            </div>
+          </form>
+          <div class="alert alert-danger error-msg" style="display:none"></div>
+        </li>
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="col-md-12">
+  <div class="panel dashboard-panel groups">
+    <h2 class="dashboard-subtitle">Groups</h2>
+    <div class="group-list">
+      <ul class="list-group">
+        {% for group in groups %}
+        <li class="list-group-item">
+          <span class="item-action">
+            <form class="delete-form" method="POST" action="{% url 'groups' %}">
+              {% csrf_token %}
+              <input type="hidden" name="method" value="DELETE">
+              <input type="hidden" name="id" value="{{ group.id }}">
+              <button type="submit" class="delete-item" data-toggle="tooltip" data-placement="top" title="Delete group">
+                <i class="fa fa-trash"></i>
+              </button>
+            </form>
+          </span>
+          <span class="item-action">
+            <button class="edit-item" group-id="{{ group.id }}" data-toggle="tooltip" data-placement="top" title="Edit group">
+              <i class="fa fa-pencil"></i>
+            </button>
+          </span>
+          {% if group.default %}
+          <span class="badge">All sources</span>
+          {% else %}
+          {% with count=group.sources.count %}
+          <span class="badge">{{ count }} source{{ count|pluralize }}</span>
+          {% endwith %}
+          {% endif %}
+          <h4 class="list-group-item-heading">
+            <span class="group-name">{{ group.name }}</span>
+            {% if group.default %}<small>(default)</small>{% endif %}
+          </h4>
+          <p class="list-group-item-text">
+            {% for target in group.targets.all %}
+            <span class="existing-target" target-id="{{ target.id }}">{{ target.name }}</span>{% if not forloop.last %},{% endif %}
+            {% empty %}
+            <span class="empty-targets">No targets</span>
+            {% endfor %}
+          </p>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="new-item">
+        <form class="save-group" method="POST" action="{% url 'groups' %}">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="">
+          <div class="input-group">
+            <input type="text" name="name" class="form-control top-input" placeholder="New group name">
+            <div class="input-group-addon top-input">
+              <input type="checkbox" name="default" value="yes">
+              Default
+              &nbsp;<i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top" title="Default groups will apply for every source, without the need to be linked to them"></i>
+            </div>
+          </div>
+          <div class="input-group">
+            <input type="text" id="target-name" class="form-control middle-input typeahead" placeholder="Type to add a new target and click the [+] button" target-id="">
+            <span class="input-group-btn">
+              <button id="add-target" class="btn btn-success no-radius" type="button">
+                &nbsp;<i class="fa fa-plus"></i>
+              </button>
+            </span>
+          </div>
+          <p id="group-targets">
+            <span id="no-targets" class="empty-targets">No targets added yet</span>
+          </p>
+          <button class="btn btn-success btn-block save-or-create" type="submit">Create</button>
+        </form>
+        <div class="alert alert-danger error-msg" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ STATIC_URL }}js/bootstrap-tooltip.min.js"></script>
+<script src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+<script src="{{ STATIC_URL }}js/typeahead-dashboard.js"></script>
+<script>
+// Sources
+var sources = [{% for source in sources %}{"id":"{{ source.id }}","name":"{{ source.name }}"}{% if not forloop.last %},{% endif %}{% endfor %}]
+initTypeahead(sources, '#source-name', 'No sources match with that ID', 10);
+// Groups
+var groups = [{% for group in groups %}{"id":"{{ group.id }}","name":"{{ group.name }}"}{% if not forloop.last %},{% endif %}{% endfor %}]
+initTypeahead(groups, '#group-name', 'No groups match with that name');
+// Targets
+var targets = [{% for target in targets %}{"id":"{{ target.id }}","name":"{{ target.name }}"}{% if not forloop.last %},{% endif %}{% endfor %}]
+initTypeahead(targets, '#target-name', 'No targets match with that name');
+// Tooltips
+$('[data-toggle="tooltip"]').tooltip({delay: 500, container: 'body'});
+// I/O counters
+function updateCounters() {
+  var counters;
+  $.get("{% url 'io_counters' %}", function(data) {
+    counters = data.split(',');
+    $('#last_second_data_in').text(counters[0]);
+    $('#last_second_count_in').text(counters[1]);
+    $('#last_second_data_out').text(counters[2]);
+    $('#last_second_count_out').text(counters[3]);
+    $('#last_minute_data_in').text(counters[4]);
+    $('#last_minute_count_in').text(counters[5]);
+    $('#last_minute_data_out').text(counters[6]);
+    $('#last_minute_count_out').text(counters[7]);
+  });
+  setTimeout(updateCounters, 1000);
+};
+updateCounters();
+</script>
+<script src="{{ STATIC_URL }}js/dashboard.js"></script>
+{% endblock %}
