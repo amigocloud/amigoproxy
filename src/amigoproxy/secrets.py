@@ -3,3 +3,5 @@ SECRET_KEY = ''
 HIPCHAT_TOKEN = ''
 
 BROKER_URL = ''
+
+REDIS_HOST = ''

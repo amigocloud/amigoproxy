@@ -63,6 +63,7 @@ target/
 celerybeat-schedule
 celerybeat.pid
 celeryev.pid
+celerybeat-schedule.*
 
 # SQLite
 *.db

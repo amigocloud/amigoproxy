@@ -89,7 +89,7 @@ WSGI_APPLICATION = 'amigoproxy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'amigoproxy.db'),
+        'NAME': os.path.join('/db/amigoproxy.db'),
     }
 }
 
@@ -145,7 +145,9 @@ CELERYBEAT_SCHEDULE = {
     }
 }
 
-from .secrets import BROKER_URL
+CELERY_ACCEPT_CONTENT = ['pickle']
+
+from .secrets import BROKER_URL, REDIS_HOST
 
 
 # Custom settings
