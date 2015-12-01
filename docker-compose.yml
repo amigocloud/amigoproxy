@@ -11,8 +11,6 @@ django:
     volumes:
         - "./src:/srv/amigoproxy"
         - "proxy_sqlite:/db"
-    expose:
-        - "9000"
     links:
         - rabbitmq
         - redis
@@ -65,9 +63,6 @@ rabbitmq:
         - "proxy_rabbitmq:/var/lib/rabbitmq"
     ports:
         - "127.0.0.1:15672:15672"
-    expose:
-        - "15672"
-        - "5672"
     restart: "on-failure"
     environment:
         RABBITMQ_DEFAULT_USER: proxy_rabbitmq
@@ -77,6 +72,4 @@ redis:
     image: redis:3.0.5
     volumes:
         - "proxy_redis:/data"
-    expose:
-        - "6379"
     restart: "on-failure"
