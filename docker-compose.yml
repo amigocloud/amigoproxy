@@ -1,0 +1,75 @@
+nginx:
+    build: dockerfiles/nginx
+    ports:
+        - "80:80"
+    links:
+        - django
+    restart: "on-failure"
+
+django:
+    build: dockerfiles/django
+    volumes:
+        - "./src:/srv/amigoproxy"
+        - "proxy_sqlite:/db"
+    links:
+        - rabbitmq
+        - redis
+    restart: "on-failure"
+
+celeryworker:
+    build: dockerfiles/celery
+    volumes:
+        - "./src:/srv/amigoproxy"
+        - "proxy_sqlite:/db"
+    links:
+        - rabbitmq
+    command: celery worker --app=amigoproxy.celery:app --pool=gevent --concurrency=300 --loglevel=INFO
+    restart: "on-failure"
+
+celeryworkerlow:
+    build: dockerfiles/celery
+    volumes:
+        - "./src:/srv/amigoproxy"
+        - "proxy_sqlite:/sqlite"
+    links:
+        - rabbitmq
+    command: celery worker --app=amigoproxy.celery:app -Q celery_low --pool=gevent --concurrency=300 --loglevel=INFO
+    restart: "on-failure"
+
+celerybeat:
+    build: dockerfiles/celery
+    volumes:
+        - "./src:/srv/amigoproxy"
+    links:
+        - rabbitmq
+    command: celery beat --app=amigoproxy.celery:app --loglevel=INFO
+    restart: "on-failure"
+
+flower:
+    build: dockerfiles/flower
+    links:
+        - rabbitmq
+    ports:
+        - "127.0.0.1:5555:5555"
+    environment:
+        BROKER_URL: "amqp://proxy_rabbitmq:passwordforproxy_rabbitmq@rabbitmq:5672//"
+        BROKER_API: "amqp://proxy_rabbitmq:passwordforproxy_rabbitmq@localhost:15672/api/"
+        FLOWER_BASIC-AUTH: "proxy_flower:passwordforproxy_flower"
+    restart: "on-failure"
+
+rabbitmq:
+    image: rabbitmq:3.5.6-management
+    volumes:
+        - "proxy_rabbitmq:/var/lib/rabbitmq"
+    ports:
+        - "127.0.0.1:15672:15672"
+    restart: "on-failure"
+    environment:
+        RABBITMQ_DEFAULT_USER: proxy_rabbitmq
+        RABBITMQ_DEFAULT_PASS: passwordforproxy_rabbitmq
+
+redis:
+    image: redis:3.0.5
+    volumes:
+        - "proxy_redis:/data"
+    restart: "on-failure"

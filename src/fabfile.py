@@ -17,28 +17,20 @@
 
 """ AmigoProxy Fabric project """
 
-import sys
-print "Fab file is using : " + sys.executable
-
 import os
 import sys
 import getpass
 
 import hipchat
 
-# Need to append the sys path to make the fabric django contrib module work.
-# Sadly these things must be done in this order to have the django_settings
-# object available
-sys.path.append(os.path.abspath(os.path.join(os.path.abspath(__file__),
-                                             os.path.pardir)))
-from fabric.contrib import django
-django.project('amigoproxy')
-
 from fabric.api import cd, env, task
 from fabric.contrib import console
 from fabric.operations import sudo
 
 from amigoproxy.secrets import HIPCHAT_TOKEN
+
+
+print "Fab file is using : " + sys.executable
 
 
 @task
@@ -77,7 +69,6 @@ def deploy(upgrade_env=False, reload_nginx=False, soft=False):
 
     with cd(env.PROJECT_ROOT):
         sudo('git pull', user=env.server_github_user)
-        sudo('cp amigoproxy/secrets_copy.py amigoproxy/secrets.py', user=env.server_github_user)
 
         if upgrade_env:
             sudo(env.PIP + ' install -r REQUIREMENTS.txt --upgrade',
@@ -86,30 +77,31 @@ def deploy(upgrade_env=False, reload_nginx=False, soft=False):
             sudo(env.PIP + ' install -r REQUIREMENTS.txt',
                  user=env.server_github_user)
 
-        # sudo(env.PYTHON_INTERPRETER + ' manage.py syncdb --migrate',
-        #      user=env.server_github_user)
-        sudo(env.PYTHON + ' manage.py collectstatic --noinput',
-             user=env.server_github_user)
+        with cd('src'):
+            # sudo(env.PYTHON_INTERPRETER + ' manage.py syncdb --migrate',
+            #      user=env.server_github_user)
+            sudo(env.PYTHON + ' manage.py collectstatic --noinput',
+                 user=env.server_github_user)
 
-        if soft:
-            # Only restart gunicorn
+    if soft:
+        # Only restart gunicorn
+        sudo('/usr/bin/supervisorctl stop %s%s' %
+             (env.SUPERVISOR_GROUP, env.SUPERVISOR_GUNICORN_NAME))
+        sudo('/usr/bin/supervisorctl start %s%s' %
+             (env.SUPERVISOR_GROUP, env.SUPERVISOR_GUNICORN_NAME))
+    else:
+        for worker in env.SUPERVISOR_CELERY_WORKER_NAMES:
             sudo('/usr/bin/supervisorctl stop %s%s' %
-                 (env.SUPERVISOR_GROUP, env.SUPERVISOR_GUNICORN_NAME))
-            sudo('/usr/bin/supervisorctl start %s%s' %
-                 (env.SUPERVISOR_GROUP, env.SUPERVISOR_GUNICORN_NAME))
-        else:
-            for worker in env.SUPERVISOR_CELERY_WORKER_NAMES:
-                sudo('/usr/bin/supervisorctl stop %s%s' %
-                     (env.SUPERVISOR_GROUP, worker))
-            sudo('/usr/bin/supervisorctl stop %s%s' %
-                 (env.SUPERVISOR_GROUP, env.SUPERVISOR_CELERY_BEAT_NAME))
-            sudo('/usr/bin/supervisorctl stop %s'
-                 % env.SUPERVISOR_GROUP)
-            sudo('/usr/bin/supervisorctl start %s'
-                 % env.SUPERVISOR_GROUP)
+                 (env.SUPERVISOR_GROUP, worker))
+        sudo('/usr/bin/supervisorctl stop %s%s' %
+             (env.SUPERVISOR_GROUP, env.SUPERVISOR_CELERY_BEAT_NAME))
+        sudo('/usr/bin/supervisorctl stop %s'
+             % env.SUPERVISOR_GROUP)
+        sudo('/usr/bin/supervisorctl start %s'
+             % env.SUPERVISOR_GROUP)
 
-        if reload_nginx:
-            sudo('/etc/init.d/nginx reload')
+    if reload_nginx:
+        sudo('/etc/init.d/nginx reload')
 
     # Send notification to HipChat
     if hasattr(env, 'server_name') and HIPCHAT_TOKEN:

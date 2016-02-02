@@ -38,11 +38,15 @@ OUT_KEYS = (LAST_SECOND_DATA_OUT, LAST_SECOND_COUNT_OUT,
             LAST_MINUTE_DATA_OUT, LAST_MINUTE_COUNT_OUT)
 
 
+def get_redis():
+    return redis.Redis(host=settings.REDIS_HOST or 'localhost')
+
+
 def update_counters(body_length,
                     second_data_key, second_count_key,
                     minute_data_key, minute_count_key, r=None):
     if r is None:
-        r = redis.Redis()
+        r = get_redis()
     second = int(time.time())
     minute = second - (second % 60)
     # last second (data)
@@ -69,7 +73,7 @@ def update_output_counters(body_length, r=None):
 
 def get_io_counters(r=None):
     if r is None:
-        r = redis.Redis()
+        r = get_redis()
     last_second = int(time.time()) - 1
     last_minute = last_second - (last_second % 60) - 60
     return (r.get(LAST_SECOND_DATA_IN % last_second) or '0',
@@ -84,7 +88,7 @@ def get_io_counters(r=None):
 
 def update_url_responsiveness(url, reached_timeout, r=None):
     if r is None:
-        r = redis.Redis()
+        r = get_redis()
     increment = 1 if reached_timeout else -1
     value = r.incr(url, increment)
     if (value > 10 * settings.EXPECTED_CONCURRENCY or
@@ -95,12 +99,12 @@ def update_url_responsiveness(url, reached_timeout, r=None):
 
 def get_url_responsiveness(url, r=None):
     if r is None:
-        r = redis.Redis()
+        r = get_redis()
     return int(r.get(url) or 0)
 
 
 def resend(url, request_body, timeout, logger=None):
-    r = redis.Redis()
+    r = get_redis()
     try:
         requests.post(url, data=request_body, timeout=timeout)
         update_output_counters(len(request_body), r)

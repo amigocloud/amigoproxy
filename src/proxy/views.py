@@ -30,7 +30,7 @@ from django.views.generic.base import View, TemplateView
 
 
 from .utils import (update_input_counters, get_io_counters,
-                    get_url_responsiveness)
+                    get_url_responsiveness, get_redis)
 from .models import Target, Source, Group
 from .parsers import all_parsers
 from .tasks import resend, resend_low
@@ -73,7 +73,7 @@ class DashboardView(TemplateView):
         else:  # Didn't break
             return HttpResponse('Invalid')
         source, _ = Source.objects.get_or_create(name=source_id)
-        r = redis.Redis()
+        r = get_redis()
         update_input_counters(len(request.body), r)
         all_targets = set()
         for group in source.all_groups():
