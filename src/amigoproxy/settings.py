@@ -147,7 +147,9 @@ CELERYBEAT_SCHEDULE = {
 
 CELERY_ACCEPT_CONTENT = ['pickle']
 
-from .secrets import BROKER_URL, REDIS_HOST
+REDIS_HOST = 'redis'
+
+from .secrets import BROKER_URL
 
 
 # Custom settings
