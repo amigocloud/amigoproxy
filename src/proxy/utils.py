@@ -94,7 +94,7 @@ def update_url_responsiveness(url, reached_timeout, r=None):
     if (value > 10 * settings.EXPECTED_CONCURRENCY or
             value < - 10 * settings.EXPECTED_CONCURRENCY):
         r.incr(url, -increment)
-    r.expire(url, 10 * settings.POST_TIMEOUT)
+    r.expire(url, int(10 * settings.POST_TIMEOUT))
 
 
 def get_url_responsiveness(url, r=None):
