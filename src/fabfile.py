@@ -70,14 +70,14 @@ def deploy(upgrade_env=False, reload_nginx=False, soft=False):
     with cd(env.PROJECT_ROOT):
         sudo('git pull', user=env.server_github_user)
 
-        if upgrade_env:
-            sudo(env.PIP + ' install -r REQUIREMENTS.txt --upgrade',
-                 user=env.server_github_user)
-        else:
-            sudo(env.PIP + ' install -r REQUIREMENTS.txt',
-                 user=env.server_github_user)
-
         with cd('src'):
+            if upgrade_env:
+                sudo(env.PIP + ' install -r requirements.txt --upgrade',
+                     user=env.server_github_user)
+            else:
+                sudo(env.PIP + ' install -r requirements.txt',
+                     user=env.server_github_user)
+
             # sudo(env.PYTHON_INTERPRETER + ' manage.py syncdb --migrate',
             #      user=env.server_github_user)
             sudo(env.PYTHON + ' manage.py collectstatic --noinput',
