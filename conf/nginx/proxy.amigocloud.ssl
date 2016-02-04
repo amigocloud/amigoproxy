@@ -16,7 +16,6 @@
 # License along with this library.
 
 server {
-    listen                 80;
     listen                 [::]:80 ipv6only=on;
     listen                 443   default   ssl;
 
