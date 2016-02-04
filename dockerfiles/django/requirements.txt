@@ -8,3 +8,4 @@ redis==2.9.0
 beautifulsoup4==4.3.2
 librabbitmq==1.6.1
 pika==0.10.0
+raven==4.2.3

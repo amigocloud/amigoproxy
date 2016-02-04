@@ -66,7 +66,9 @@ PROJECT_APPS = (
     'proxy',
 )
 
-INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS
+INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS + (
+    'raven.contrib.django.raven_compat',
+)
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -159,6 +161,8 @@ LOGIN_REDIRECT_URL = '/'
 
 POST_TIMEOUT = 5
 EXPECTED_CONCURRENCY = 300
+
+RAVEN_CONFIG = {}
 
 
 # Import local settings (if any)

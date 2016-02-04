@@ -18,11 +18,18 @@
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from django.conf import settings
+from raven import Client
+from raven.contrib.celery import register_signal
 import pika
 
 from .utils import resend as _resend
 
 logger = get_task_logger(__name__)
+
+
+if settings.RAVEN_CONFIG:
+    client = Client(settings.RAVEN_CONFIG['dsn'])
+    register_signal(client)
 
 
 @shared_task(name='resend', max_retries=3, default_retry_delay=60)
