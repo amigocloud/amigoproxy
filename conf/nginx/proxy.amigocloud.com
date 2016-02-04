@@ -38,7 +38,7 @@ server {
 
     location /static/ {
         autoindex  off;
-        alias      /srv/proxy.amigocloud.com/amigoproxy/static/;
+        alias      /srv/proxy.amigocloud.com/amigoproxy/src/static/;
         expires    30d;
         add_header Pragma public;
         add_header Cache-Control   "public";
