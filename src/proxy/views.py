@@ -30,7 +30,7 @@ from django.views.generic.base import View, TemplateView
 
 
 from .utils import (update_input_counters, get_io_counters,
-                    get_url_responsiveness, get_redis)
+                    get_url_responsiveness, get_redis, reformat_response)
 from .models import Target, Source, Group
 from .parsers import all_parsers
 from .tasks import resend, resend_low
@@ -81,10 +81,11 @@ class DashboardView(TemplateView):
                 all_targets.add(target)
         for target in all_targets:
             responsiveness = get_url_responsiveness(target.url, r)
+            body = reformat_response(request.body, target.response_format)
             if responsiveness < -settings.EXPECTED_CONCURRENCY:
-                resend_low.delay(target.url, request.body)
+                resend_low.delay(target.url, body)
             else:
-                resend.delay(target.url, request.body)
+                resend.delay(target.url, body)
         return HttpResponse('Ok')
 
 
@@ -139,6 +140,8 @@ class TargetsView(DeleteMixin, BaseView):
             return HttpResponseForbidden('Not authenticated.')
         id = request.POST.get('id')
         name, url = request.POST.get('name'), request.POST.get('url')
+        reverse = request.POST.get('reverse') or False
+        response_format = request.POST.get('format')
         if not id:  # New target
             if not name or not url:
                 return HttpResponseBadRequest('Both name and URL are required')
@@ -160,6 +163,8 @@ class TargetsView(DeleteMixin, BaseView):
             if response.headers.get('AmigoProxy') == 'yes':
                 return HttpResponseBadRequest('AmigoProxy cannot be a target')
             target.url = url
+            target.reverse = reverse
+            target.response_format = response_format
         target.save()
         return HttpResponse('Ok')
 

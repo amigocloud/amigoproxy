@@ -122,6 +122,8 @@ License along with this library.
             <a href="{{ target.url }}" target="_blank">
               <i class="fa fa-external-link"></i>
             </a>
+            <p class="reverse">Reversed lat and lng: {{ target.reverse }}</p>
+            <p class="format">Format: {{ target.response_format }}</p>
           </p>
         </li>
         {% endfor %}
@@ -132,6 +134,18 @@ License along with this library.
           <input type="hidden" name="id" value="">
           <input type="text" name="name" class="form-control top-input" placeholder="New target name">
           <input type="url" name="url" class="form-control middle-input" placeholder="New target URL">
+          <div class="form-group">
+            <label>
+              <input type="checkbox" name="reverse">Reverse latitude and longitude
+            </label>
+          </div>
+          <div class="form-group">
+            <label for="format">Response format:</label>
+            <select name="format">
+              <option name="XML" value="xml">XML</option>
+              <option name="JSON" value="json">JSON</option>
+            </select>
+          </div>
           <button class="btn btn-success btn-block save-or-create" type="submit">Create</button>
         </form>
         <div class="alert alert-danger error-msg" style="display:none"></div>

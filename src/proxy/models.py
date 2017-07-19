@@ -29,6 +29,8 @@ class Target(models.Model):
                           default=generate_id)
     name = models.CharField(max_length=100)
     url = models.URLField()
+    reverse = models.BooleanField(default=True)
+    response_format = models.CharField(max_length=100)
 
     class Meta:
         ordering = ('name',)

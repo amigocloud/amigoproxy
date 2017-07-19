@@ -18,7 +18,9 @@
 import redis
 import requests
 import time
+import json
 
+import xmltodict
 from django.conf import settings
 
 LAST_SECOND_DATA_IN = 'lsdi_%s'
@@ -101,6 +103,13 @@ def get_url_responsiveness(url, r=None):
     if r is None:
         r = get_redis()
     return int(r.get(url) or 0)
+
+
+def reformat_response(response, response_format):
+    if response_format is 'json':
+        return json.dumps(xmltodict.parse(response))
+    else: # In the future could be more cases
+        return response
 
 
 def resend(url, request_body, timeout, logger=None):

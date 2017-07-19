@@ -35,9 +35,16 @@ $('.delete-form').submit(function () {
 $('.targets .edit-item').click(function () {
     var parent = $(this).parent().parent();
     var form = $('.save-target');
+    var reverse, format;
     form.find('input[name="id"]').val($(this).attr('target-id'));
     form.find('input[name="name"]').val(parent.find('.target-name').text().trim());
     form.find('input[name="url"]').val(parent.find('.target-url').text().trim());
+
+    reverse = parent.find('.reverse').text().indexOf('True') != -1 ;
+    format = parent.find('.format').text().indexOf('xml') != -1 ? 'xml' : 'json';
+
+    form.find('input[name="reverse"]').val(reverse);
+    form.find('select[name="format"]').val(format);
     form.find('.save-or-create').text('Save');
     form.find('input[name="name"]').focus();
     return false;

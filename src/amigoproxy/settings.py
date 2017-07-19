@@ -62,11 +62,15 @@ DJANGO_APPS = (
     'django.contrib.staticfiles',
 )
 
+EXTERNAL_APPS = (
+    'south',
+ )
+
 PROJECT_APPS = (
     'proxy',
 )
 
-INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS + (
+INSTALLED_APPS = DJANGO_APPS + EXTERNAL_APPS + PROJECT_APPS + (
     'raven.contrib.django.raven_compat',
 )
 
