@@ -81,7 +81,7 @@ class DashboardView(TemplateView):
                 all_targets.add(target)
         for target in all_targets:
             responsiveness = get_url_responsiveness(target.url, r)
-            body = reformat_response(request.body, target.response_format)
+            body = reformat_response(request.body, target)
             if responsiveness < -settings.EXPECTED_CONCURRENCY:
                 resend_low.delay(target.url, body)
             else:

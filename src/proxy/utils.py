@@ -21,6 +21,7 @@ import time
 import json
 
 import xmltodict
+from bs4 import BeautifulSoup
 from django.conf import settings
 
 LAST_SECOND_DATA_IN = 'lsdi_%s'
@@ -105,8 +106,21 @@ def get_url_responsiveness(url, r=None):
     return int(r.get(url) or 0)
 
 
-def reformat_response(response, response_format):
-    if response_format is 'json':
+def reverse_lat_lng(response, device="moovbox"):
+    # For now everything is moovbox
+    soup = BeautifulSoup(response)
+    for tag in soup.find_all('coordinate'):
+        latitude = tag.latitude.string
+        tag.latitude.string = tag.longitude.string
+        tag.longitude.string = latitude
+
+    return str(soup)
+
+def reformat_response(response, target):
+    if target.reverse:
+        response = reverse_lat_lng(response)
+
+    if target.response_format == 'json':
         return json.dumps(xmltodict.parse(response))
     else: # In the future could be more cases
         return response
